@@ -101,6 +101,7 @@ All configuration is done through environment variables. Settings can also be ch
 | Variable | Default | Description |
 |---|---|---|
 | `PEBBLE_PASSWORD` | — | Password for the management UI. If unset, a setup screen prompts on first visit |
+| `DISABLE_AUTH` | `false` | Set to `true` to completely disable authentication (use only in trusted networks) |
 | `PORT` | `3000` | Port for the Pebble management UI |
 | `HOST` | `0.0.0.0` | Bind address |
 | `CADDYFILES_DIR` | `/etc/caddy` | Directory for Caddy config files |

@@ -131,6 +131,10 @@ func (h *Handler) handleAuthCheck(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	if h.Auth.Disabled() {
+		writeJSON(w, http.StatusOK, map[string]any{"authenticated": true, "authRequired": false, "needsSetup": false})
+		return
+	}
 	if h.Auth.NeedsSetup() {
 		writeJSON(w, http.StatusOK, map[string]any{"authenticated": false, "authRequired": true, "needsSetup": true})
 		return

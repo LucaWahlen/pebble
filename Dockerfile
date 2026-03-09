@@ -57,5 +57,3 @@ ENTRYPOINT ["/usr/local/bin/pebble-server"]
 FROM pebble AS pebble-tunnel
 
 COPY --from=cf-downloader /usr/local/bin/cloudflared /usr/local/bin/cloudflared
-
-
