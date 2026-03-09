@@ -1,0 +1,21 @@
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# UI build artifacts & deps (rebuilt in Docker)
+ui/node_modules
+ui/.svelte-kit
+ui/build
+
+# Server build artifacts
+server/pebble-server
+server/server
+
+# Docs
+README.md
+LICENSE
+

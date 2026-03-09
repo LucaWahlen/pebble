@@ -1,0 +1,46 @@
+services:
+  pebble:
+    build:
+      context: .
+      target: pebble
+    image: ghcr.io/lucawahlen/pebble:latest
+    ports:
+      - "3000:3000"
+      - "80:80"
+      - "443:443"
+    environment:
+      - PEBBLE_PASSWORD=${PEBBLE_PASSWORD:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_REPO=${GITHUB_REPO:-}
+      - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
+      - SYNC_ENABLED=${SYNC_ENABLED:-true}
+    volumes:
+      - pebble-config:/etc/pebble
+      - caddy-files:/etc/caddy
+    restart: unless-stopped
+
+  # Uncomment to use the tunnel variant instead of the default above.
+  # pebble-tunnel:
+  #   build:
+  #     context: .
+  #     target: pebble-tunnel
+  #   image: ghcr.io/lucawahlen/pebble-tunnel:latest
+  #   ports:
+  #     - "3000:3000"
+  #     - "80:80"
+  #     - "443:443"
+  #   environment:
+  #     - PEBBLE_PASSWORD=${PEBBLE_PASSWORD:-}
+  #     - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+  #     - GITHUB_REPO=${GITHUB_REPO:-}
+  #     - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
+  #     - SYNC_ENABLED=${SYNC_ENABLED:-true}
+  #     - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+  #   volumes:
+  #     - pebble-config:/etc/pebble
+  #     - caddy-files:/etc/caddy
+  #   restart: unless-stopped
+
+volumes:
+  pebble-config:
+  caddy-files:

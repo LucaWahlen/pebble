@@ -1,0 +1,14 @@
+node_modules/
+
+ui/.svelte-kit/
+ui/build/
+server/static/*
+!server/static/.gitkeep
+server/pebble-server
+server/server
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
