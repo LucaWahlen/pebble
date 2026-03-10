@@ -67,9 +67,14 @@ func main() {
 	caddyMgr := caddy.NewManager(caddyfilesDir)
 	ghClient := github.NewClient(&http.Client{Timeout: 30 * time.Second}, filesSvc)
 	syncer := github.NewSyncer(ghClient, configStore, caddyMgr)
-	guard := auth.NewGuard(os.Getenv("PEBBLE_PASSWORD"), configStore)
 
-	if guard.Enabled() {
+	disableAuthEnv := strings.ToLower(os.Getenv("DISABLE_AUTH"))
+	disableAuth := disableAuthEnv == "true" || disableAuthEnv == "1"
+	guard := auth.NewGuard(os.Getenv("PEBBLE_PASSWORD"), configStore, disableAuth)
+
+	if guard.Disabled() {
+		log.Println("⚠ Authentication is DISABLED (DISABLE_AUTH=true)")
+	} else if guard.Enabled() {
 		log.Println("Authentication enabled (PEBBLE_PASSWORD is set)")
 	} else {
 		log.Println("No PEBBLE_PASSWORD set – initial setup required via UI")

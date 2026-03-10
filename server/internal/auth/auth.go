@@ -34,10 +34,12 @@ type PasswordStore interface {
 // Guard provides password-based session auth for HTTP handlers.
 // If no password is configured, all requests are allowed through
 // until a password is set via SetPassword.
+// If disabled is true, auth is completely bypassed.
 type Guard struct {
 	passwordHash []byte // HMAC-SHA256 of the password
 	hmacKey      []byte
 	store        PasswordStore
+	disabled     bool // when true, auth is completely disabled
 
 	mu       sync.RWMutex
 	sessions map[string]session
@@ -47,13 +49,19 @@ type Guard struct {
 }
 
 // NewGuard creates an auth guard.
+// If disabled is true, all requests are allowed through unconditionally.
 // If envPassword is non-empty, it is used directly.
 // Otherwise, the guard attempts to load a persisted password from the store.
-func NewGuard(envPassword string, store PasswordStore) *Guard {
+func NewGuard(envPassword string, store PasswordStore, disabled bool) *Guard {
 	g := &Guard{
 		sessions:    make(map[string]session),
 		stopCleanup: make(chan struct{}),
 		store:       store,
+		disabled:    disabled,
+	}
+
+	if disabled {
+		return g
 	}
 
 	if envPassword != "" {
@@ -81,16 +89,27 @@ func NewGuard(envPassword string, store PasswordStore) *Guard {
 	return g
 }
 
-// Enabled returns true if a password has been configured.
+// Disabled returns true if auth has been completely disabled via env.
+func (g *Guard) Disabled() bool {
+	return g.disabled
+}
+
+// Enabled returns true if a password has been configured (and auth is not disabled).
 func (g *Guard) Enabled() bool {
+	if g.disabled {
+		return false
+	}
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.passwordHash != nil
 }
 
 // NeedsSetup returns true if no password has been set yet
-// (neither via env nor via the UI).
+// (neither via env nor via the UI). Returns false if auth is disabled.
 func (g *Guard) NeedsSetup() bool {
+	if g.disabled {
+		return false
+	}
 	return !g.Enabled()
 }
 
@@ -172,11 +191,11 @@ func (g *Guard) ValidToken(token string) bool {
 }
 
 // Middleware returns an HTTP middleware that protects handlers behind auth.
-// If no password is set yet, requests pass through. Once a password is
-// configured (via env or SetPassword), a valid session cookie is required.
+// If auth is disabled or no password is set yet, requests pass through.
+// Once a password is configured (via env or SetPassword), a valid session cookie is required.
 func (g *Guard) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !g.Enabled() {
+		if g.disabled || !g.Enabled() {
 			next.ServeHTTP(w, r)
 			return
 		}
