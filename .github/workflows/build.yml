@@ -22,8 +22,12 @@ jobs:
         include:
           - target: pebble
             image: lucawahlen/pebble
+          - target: pebble-dns
+            image: lucawahlen/pebble-dns
           - target: pebble-tunnel
             image: lucawahlen/pebble-tunnel
+          - target: pebble-tunnel-dns
+            image: lucawahlen/pebble-tunnel-dns
 
     steps:
       - name: Checkout
