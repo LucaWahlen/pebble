@@ -7,7 +7,7 @@ COPY ui/ ./
 RUN npm run build
 
 # --- Go build (Pebble + Caddy without plugins) ---
-FROM golang:1.25-alpine AS go-builder-base
+FROM golang:1.26-alpine AS go-builder-base
 WORKDIR /app
 RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@latest
@@ -21,7 +21,7 @@ COPY --from=ui-builder /app/build ./static
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o pebble-server .
 
 # --- Go build (Pebble + Caddy with Cloudflare DNS plugin) ---
-FROM golang:1.25-alpine AS go-builder-dns
+FROM golang:1.26-alpine AS go-builder-dns
 WORKDIR /app
 RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@latest
