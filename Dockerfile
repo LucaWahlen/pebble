@@ -10,8 +10,9 @@ RUN npm run build
 FROM golang:1.25-alpine AS go-builder-base
 WORKDIR /app
 RUN apk add --no-cache git
-RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build \
+RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
+RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
+  --with github.com/corazawaf/coraza-caddy/v2@v2.5.0 \
     --output /go/bin/caddy
 
 COPY server/go.mod ./
@@ -24,9 +25,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o pebble-serve
 FROM golang:1.25-alpine AS go-builder-dns
 WORKDIR /app
 RUN apk add --no-cache git
-RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build \
-    --with github.com/caddy-dns/cloudflare \
+RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
+RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
+  --with github.com/caddy-dns/cloudflare@v0.2.4 \
+  --with github.com/corazawaf/coraza-caddy/v2@v2.5.0 \
     --output /go/bin/caddy
 
 COPY server/go.mod ./
