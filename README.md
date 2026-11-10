@@ -73,14 +73,16 @@ docker run -d \
 
 ## Images
 
-Two separate packages are published from a single multi-target Dockerfile:
+Four image variants are published from a single multi-target Dockerfile:
 
-| Image | Description                                                                                 |
-|---|---------------------------------------------------------------------------------------------|
-| `ghcr.io/lucawahlen/pebble` | Base image — Pebble + Caddy                                                                 |
+| Image | Description |
+|---|---|
+| `ghcr.io/lucawahlen/pebble` | Base image — Pebble + Caddy |
+| `ghcr.io/lucawahlen/pebble-dns` | Adds the Cloudflare DNS challenge plugin |
 | `ghcr.io/lucawahlen/pebble-tunnel` | Adds Cloudflare Tunnel (`cloudflared`) |
+| `ghcr.io/lucawahlen/pebble-tunnel-dns` | Cloudflare Tunnel and DNS challenge plugin |
 
-Both share the same version tags. Use whichever fits your setup.
+All variants include Coraza WAF `v2.5.0` and the embedded OWASP Core Rule Set `v4.25.0`. They share the existing version tags and image names; choose the variant that fits your setup.
 
 ### Building locally
 
@@ -90,7 +92,48 @@ docker build --target pebble -t pebble .
 
 # Tunnel variant
 docker build --target pebble-tunnel -t pebble-tunnel .
+
+# DNS and combined variants
+docker build --target pebble-dns -t pebble-dns .
+docker build --target pebble-tunnel-dns -t pebble-tunnel-dns .
 ```
+
+## Coraza WAF
+
+[Coraza](https://coraza.io/) is an open-source web application firewall for Caddy. It can run the [OWASP Core Rule Set (CRS)](https://coreruleset.org/), which detects common attacks and malformed requests. Coraza and CRS are compiled into every Pebble image; CRS rules are embedded in the binary, so no extra container, mounted rules directory, or network port is needed.
+
+The WAF is **not automatically activated**. Existing Caddyfiles continue to work unchanged, and sites are inspected only when they import a WAF snippet. This keeps the default behavior compatible and avoids loading CRS rules for deployments that do not use them.
+
+Add this reusable snippet to your Caddyfile, then import it in each site you want to protect:
+
+```caddy
+{
+  order coraza_waf first
+}
+
+(waf) {
+  coraza_waf {
+    load_owasp_crs
+    directives `
+      Include @coraza.conf-recommended
+      Include @crs-setup.conf.example
+      SecRuleEngine DetectionOnly
+      Include @owasp_crs/*.conf
+    `
+  }
+}
+
+app.example.com {
+  import waf
+  reverse_proxy localhost:8080
+}
+```
+
+CRS is loaded by the `load_owasp_crs` option together with the embedded `@owasp_crs` rules. The setup file uses CRS defaults, including Paranoia Level 1 and anomaly scoring. In `DetectionOnly`, matching requests are logged but not blocked. After reviewing logs and tuning exclusions, change `SecRuleEngine DetectionOnly` to `SecRuleEngine On` to block requests that reach the CRS anomaly score threshold. Use `SecRuleEngine Off` to disable inspection for a site while retaining the snippet, or remove `import waf` from that site.
+
+To exclude application-specific traffic, add supported Coraza/CRS exclusion directives before `Include @owasp_crs/*.conf`; consult the [CRS tuning guide](https://coreruleset.org/docs/index.html) and avoid broad exclusions. Review Caddy/Coraza messages with `docker logs <container>`.
+
+The Coraza and CRS versions are pinned in the Dockerfile. To upgrade, update the Coraza module pin and verify its CRS dependency, then update the versions documented here and build/validate every image variant.
 
 ## Configuration
 
