@@ -12,7 +12,7 @@ WORKDIR /app
 RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
 RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
-  --with github.com/corazawaf/coraza-caddy/v2@v2.5.0 \
+  --with github.com/corazawaf/coraza-caddy/v2@latest \
     --output /go/bin/caddy
 
 COPY server/go.mod ./
@@ -28,7 +28,7 @@ RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
 RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
   --with github.com/caddy-dns/cloudflare@v0.2.4 \
-  --with github.com/corazawaf/coraza-caddy/v2@v2.5.0 \
+  --with github.com/corazawaf/coraza-caddy/v2@latest \
     --output /go/bin/caddy
 
 COPY server/go.mod ./
