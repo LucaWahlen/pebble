@@ -11,7 +11,7 @@ FROM golang:1.26-alpine AS go-builder-base
 WORKDIR /app
 RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
-RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
+RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.4 \
   --with github.com/corazawaf/coraza-caddy/v2@latest \
     --output /go/bin/caddy
 
@@ -26,7 +26,7 @@ FROM golang:1.25-alpine AS go-builder-dns
 WORKDIR /app
 RUN apk add --no-cache git
 RUN go install -ldflags="-s -w" -trimpath github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
-RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.2 \
+RUN CGO_ENABLED=0 GOOS=linux /go/bin/xcaddy build v2.11.4 \
   --with github.com/caddy-dns/cloudflare@v0.2.4 \
   --with github.com/corazawaf/coraza-caddy/v2@latest \
     --output /go/bin/caddy
