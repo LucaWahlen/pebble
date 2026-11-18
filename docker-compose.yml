@@ -36,6 +36,9 @@ services:
   #     - GITHUB_BRANCH=${GITHUB_BRANCH:-main}
   #     - SYNC_ENABLED=${SYNC_ENABLED:-true}
   #     - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+  #     - TUNNEL_TOKEN_1=${TUNNEL_TOKEN_1:-}
+  #     - TUNNEL_TOKEN_2=${TUNNEL_TOKEN_2:-}
+  #     - TUNNEL_TOKEN_3=${TUNNEL_TOKEN_3:-}
   #   volumes:
   #     - pebble-config:/etc/pebble
   #     - caddy-files:/etc/caddy
