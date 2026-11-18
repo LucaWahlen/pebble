@@ -153,7 +153,10 @@ All configuration is done through environment variables. Settings can also be ch
 | `GITHUB_REPO` | — | GitHub repository (`owner/repo`) |
 | `GITHUB_BRANCH` | `main` | Branch to sync with |
 | `SYNC_ENABLED` | `true` | Enable/disable automatic GitHub sync |
-| `TUNNEL_TOKEN` | — | Cloudflare Tunnel token *(tunnel image only)* |
+| `TUNNEL_TOKEN` | — | Cloudflare Tunnel token 1 (legacy alias for `TUNNEL_TOKEN_1`) *(tunnel image only)* |
+| `TUNNEL_TOKEN_1` | — | Cloudflare Tunnel token for connector 1 *(tunnel image only)* |
+| `TUNNEL_TOKEN_2` | — | Cloudflare Tunnel token for connector 2 *(tunnel image only)* |
+| `TUNNEL_TOKEN_3` | — | Cloudflare Tunnel token for connector 3 *(tunnel image only)* |
 
 ### Volumes
 
@@ -236,6 +239,9 @@ services:
       - "443:443"
     environment:
       - TUNNEL_TOKEN=your-tunnel-token-here
+      # Optional additional connectors (up to three total):
+      # - TUNNEL_TOKEN_2=second-tunnel-token-here
+      # - TUNNEL_TOKEN_3=third-tunnel-token-here
     volumes:
       - pebble-config:/etc/pebble
       - caddy-files:/etc/caddy

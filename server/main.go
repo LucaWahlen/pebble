@@ -86,25 +86,40 @@ func main() {
 	caddyMgr.EnsureDefaultCaddyfile(port)
 	caddyMgr.Start()
 
-	// Start Cloudflare Tunnel if configured
-	tunnelToken := os.Getenv("TUNNEL_TOKEN")
-	var tunnelCmd *exec.Cmd
-	if tunnelToken != "" {
-		log.Println("Starting Cloudflare Tunnel...")
-		tunnelCmd = exec.Command("cloudflared", "tunnel", "--no-autoupdate", "run", "--token", tunnelToken)
+	// Start up to three Cloudflare Tunnel connectors.
+	tunnelTokens := []string{}
+	tunnelToken1 := os.Getenv("TUNNEL_TOKEN_1")
+	if tunnelToken1 == "" {
+		tunnelToken1 = os.Getenv("TUNNEL_TOKEN")
+	}
+	for _, tunnelToken := range []string{
+		tunnelToken1,
+		os.Getenv("TUNNEL_TOKEN_2"),
+		os.Getenv("TUNNEL_TOKEN_3"),
+	} {
+		if strings.TrimSpace(tunnelToken) != "" {
+			tunnelTokens = append(tunnelTokens, tunnelToken)
+		}
+	}
+
+	var tunnelCmds []*exec.Cmd
+	for i, tunnelToken := range tunnelTokens {
+		log.Printf("Starting Cloudflare Tunnel %d...", i+1)
+		tunnelCmd := exec.Command("cloudflared", "tunnel", "--no-autoupdate", "run", "--token", tunnelToken)
 		tunnelCmd.Stdout = os.Stdout
 		tunnelCmd.Stderr = os.Stderr
 		if err := tunnelCmd.Start(); err != nil {
-			log.Printf("Failed to start cloudflared: %v", err)
-			tunnelCmd = nil
-		} else {
-			log.Printf("Cloudflare Tunnel started (PID %d)", tunnelCmd.Process.Pid)
-			go func() {
-				if err := tunnelCmd.Wait(); err != nil {
-					log.Printf("cloudflared exited: %v", err)
-				}
-			}()
+			log.Printf("Failed to start cloudflared tunnel %d: %v", i+1, err)
+			continue
 		}
+
+		log.Printf("Cloudflare Tunnel %d started (PID %d)", i+1, tunnelCmd.Process.Pid)
+		tunnelCmds = append(tunnelCmds, tunnelCmd)
+		go func(connectorNumber int, cmd *exec.Cmd) {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("Cloudflare Tunnel %d exited: %v", connectorNumber, err)
+			}
+		}(i+1, tunnelCmd)
 	}
 
 	// Initial GitHub sync if configured
@@ -180,8 +195,10 @@ func main() {
 		sig := <-sigCh
 		log.Printf("Received %s, shutting down...", sig)
 		syncer.StopPolling()
-		if tunnelCmd != nil && tunnelCmd.Process != nil {
-			_ = tunnelCmd.Process.Signal(syscall.SIGTERM)
+		for _, tunnelCmd := range tunnelCmds {
+			if tunnelCmd != nil && tunnelCmd.Process != nil {
+				_ = tunnelCmd.Process.Signal(syscall.SIGTERM)
+			}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
